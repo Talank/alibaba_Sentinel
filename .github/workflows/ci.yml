@@ -1,21 +1,17 @@
 name: Sentinel CI
 
 on:
-  push:
-    branches:
-      - '*'
-  pull_request:
-    branches:
-      - master
-      - "1.8"
-      - "2.0"
-
+  workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         java: [8, 11, 17, 21]
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,11 +33,11 @@ jobs:
 
       - name: Maven Test With Spring 6.x
         run: mvn --batch-mode test -Dsurefire.jdk-toolchain-version=${{ matrix.java }}
-        if: ${{ matrix.java >= 17 }}
+        if: always()
 
       - name: Maven Test Without Spring 6.x
         run: mvn --batch-mode test -Dsurefire.jdk-toolchain-version=${{ matrix.java }} -Dskip.spring.v6x.test=true
-        if: ${{ matrix.java < 17 }}
+        if: always()
 
       - name: Build with Maven
         run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -DminimumPriority=1
